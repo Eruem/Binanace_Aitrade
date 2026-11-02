@@ -1,0 +1,40 @@
+# 密钥与本地环境:.env 含真实 API Key/Secret/Token,绝不上传;
+# .env.example 是空模板(全部占位符),需要进库
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# 运行时数据(审计/订单状态/循环日志/用量,持续增长)
+var/
+
+# 本地数据库
+*.sqlite3
+*.db
+
+# Python 虚拟环境与缓存
+.venv/
+venv/
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+dist/
+build/
+*.egg-info/
+
+# 日志
+*.log
+logs/
+
+# 编辑器与系统文件
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+.ipynb_checkpoints/

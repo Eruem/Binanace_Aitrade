@@ -1,0 +1,81 @@
+# Docker 部署:交易循环(loop)+ 只读监控面板(dashboard)。
+# 密钥不进镜像、不写进本文件:全部经 env_file: .env 运行时注入。
+# 启动:docker compose up -d      日志:docker compose logs -f loop
+# 常用:docker compose restart loop / docker compose stop
+services:
+  loop:
+    build: .
+    env_file: .env
+    environment:
+      # 容器内 127.0.0.1 指向容器自身,代理跑在宿主机必须走 host.docker.internal
+      # 前置:代理客户端开启"允许局域网连接"(否则容器连不上宿主机 10808)
+      EXCHANGE_PROXY_URL: http://host.docker.internal:10808
+      TZ: Asia/Shanghai
+    extra_hosts:
+      # Linux 引擎需要;Docker Desktop(Windows)自带 host.docker.internal
+      - "host.docker.internal:host-gateway"
+    # 1800 秒:与 trading.yaml 精简币对配套(2026-11-02,降 token 消耗)
+    command: ["python", "scripts/run_agent.py", "--loop", "--interval", "1800"]
+    volumes:
+      - ./var:/app/var # 审计/状态/循环日志(读写)
+      - ./config:/app/config:ro # 交易范围/风控配置(只读)
+    restart: unless-stopped
+    logging: # 日志轮转:默认 json-file 永不清理,跑久了吃满磁盘
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+  dashboard:
+    build: .
+    env_file: .env
+    environment:
+      TZ: Asia/Shanghai
+      # 容器内需监听 0.0.0.0 才能被端口映射;宿主机只发布 127.0.0.1,
+      # 外部机器依旧不可达(与 .streamlit/config.toml 的 127.0.0.1 约束等价)
+      STREAMLIT_SERVER_ADDRESS: 0.0.0.0
+    command:
+      [
+        "python",
+        "-m",
+        "streamlit",
+        "run",
+        "scripts/dashboard.py",
+        "--server.headless", # 容器内无浏览器;同时规避 Email onboarding 提示
+        "true",
+      ]
+    ports:
+      - "127.0.0.1:8501:8501"
+    volumes:
+      - ./var:/app/var:ro # 面板只读展示
+      - ./config:/app/config:ro
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+    healthcheck:
+      test:
+        - "CMD"
+        - "python"
+        - "-c"
+        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8501/_stcore/health', timeout=3)"
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+
+  # PostgreSQL 可选(当前 .env 的 DATABASE_URL 为空 = 仅 JSONL 审计)。
+  # 启用:DATABASE_URL 指向本服务,然后 docker compose --profile db up -d
+  postgres:
+    image: postgres:16-alpine
+    profiles: ["db"]
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: crypto_agent
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:

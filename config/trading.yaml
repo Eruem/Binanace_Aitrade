@@ -1,0 +1,43 @@
+# 交易范围配置。第一阶段仅 Spot;禁止合约、杠杆、借贷。
+market:
+  exchange: binance
+  market_type: spot
+  default_symbol: BTC/USDT
+  # 2026-11-02 精简:16 → 6(配合 --interval 1800,token 消耗降至约 1/6);
+  # 按市值/流动性取 BTC ETH BNB SOL DOGE ADA,可随时增减
+  symbols:
+    - BTC/USDT
+    - ETH/USDT
+    - BNB/USDT
+    - SOL/USDT
+    - DOGE/USDT
+    - ADA/USDT
+  timeframes:
+    - 15m
+    - 1h
+    - 4h
+
+strategies:
+  candidates:
+    - DCA
+    - TREND_FOLLOWING
+    - NO_TRADE
+  # GRID 仅定义接口与研究文档,第一阶段不自动执行
+  research_only:
+    - GRID
+
+execution:
+  # 与环境变量 TRADING_MODE 保持一致(不一致时启动拒绝);
+  # live 未实现且被禁止
+  mode: ${TRADING_MODE:-paper}
+  # broker 由 mode 派生(paper_broker / binance_testnet_broker);
+  # 如显式填写必须与 mode 一致
+  # Testnet 密钥只经环境变量提供,与任何正式密钥分开
+  testnet:
+    api_key: ${BINANCE_TESTNET_API_KEY:-}
+    api_secret: ${BINANCE_TESTNET_API_SECRET:-}
+  # Live 真实资金密钥(阶段 8):仅 TRADING_MODE=live + ENABLE_LIVE_TRADING=true
+  # 时使用;与 Testnet 密钥完全分开,禁止复用;只经环境变量提供
+  live:
+    api_key: ${BINANCE_LIVE_API_KEY:-}
+    api_secret: ${BINANCE_LIVE_API_SECRET:-}

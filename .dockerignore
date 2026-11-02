@@ -1,0 +1,23 @@
+# 密钥绝不进镜像(最重要的一条)
+.env
+
+# 本地环境与缓存
+.venv
+venv
+__pycache__
+*.pyc
+.pytest_cache
+.git
+.gitignore
+.claude
+.vscode
+
+# 运行时数据经卷挂载(var/ 必须在宿主机,不进镜像)
+var
+*.log
+
+# 开发资产不进镜像
+tests
+docs
+Dockerfile
+docker-compose.yml

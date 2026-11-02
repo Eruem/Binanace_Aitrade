@@ -1,0 +1,29 @@
+# 确定性风控参数(指导书 8.2)。LLM 不得修改本文件的任何限额。
+# 仅用于模拟环境的工程测试,不是投资建议。
+risk:
+  enabled: true
+
+  # 单笔订单金额上限占权益比例
+  max_single_order_equity_pct: 0.10
+  # 总敞口(持仓+挂单占用)上限占权益比例
+  max_total_exposure_pct: 0.30
+  # 单笔交易风险占权益比例上限。定义: (入场价-止损价)/入场价 * 订单金额,
+  # 即按 assumed_stop_loss_pct 估算的最大亏损额,不是"订单金额百分比"。
+  max_single_trade_risk_pct: 0.005
+  # 当日已实现亏损达到该比例即禁止新开仓(BUY);平仓 SELL 不受限
+  max_daily_loss_pct: 0.02
+  # 连续亏损达到该次数即禁止新开仓
+  max_consecutive_losses: 3
+
+  reject_expired_signal: true
+  reject_duplicate_order: true
+  require_closed_candle: true
+  stop_on_data_error: true
+
+  # 决策单未携带止损价;风控按该固定比例估算单笔止损距离(工程假设,须在文档声明)
+  assumed_stop_loss_pct: 0.02
+  # 成本假设:手续费 + 滑点,占用资金按 (1 + fee + slippage) 折算
+  fee_rate: 0.001
+  slippage_rate: 0.0005
+  # 现货最小名义金额(USDT)
+  min_order_usdt: 5.0

@@ -1,0 +1,11 @@
+# 监控面板的 Streamlit 配置(阶段 9)。
+# 安全边界:只监听本机 loopback,不对外网开放;不发送遥测。
+[server]
+address = "127.0.0.1"
+port = 8501
+headless = false
+# 非交互环境(容器/CI)无 stdin,Email 提示会 EOF 崩溃;遥测已关,提示无意义
+showEmailPrompt = false
+
+[browser]
+gatherUsageStats = false

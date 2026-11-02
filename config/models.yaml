@@ -1,0 +1,65 @@
+# LLM Provider / Model / 路由配置。
+# 占位符语法(形如 美元符号+大括号+变量名,可带 :-默认值)由 config/loader.py 解析;
+# 缺必需变量时启动失败并只报变量名,绝不报值。不要在本文件注释里写占位符示例,
+# 否则会被当成真变量解析。
+providers:
+  primary:
+    base_url: ${LLM_PRIMARY_BASE_URL}
+    api_key: ${LLM_PRIMARY_API_KEY}
+    timeout: 45
+
+  secondary:
+    base_url: ${LLM_SECONDARY_BASE_URL}
+    api_key: ${LLM_SECONDARY_API_KEY}
+    timeout: 45
+
+models:
+  fast:
+    provider: primary
+    model: ${LLM_FAST_MODEL}
+    temperature: 0.2
+    # 推理型模型(如 MiMo)会先输出思考 token 再给正文;
+    # 预算太小会 finish_reason=length 且正文为空,这里放大余量
+    max_tokens: 3000
+    timeout: 45
+    supports_json: true
+
+  reasoning:
+    provider: primary
+    model: ${LLM_REASONING_MODEL}
+    temperature: 0.1
+    max_tokens: 4000
+    timeout: 45
+    supports_json: true
+
+  backup:
+    provider: secondary
+    model: ${LLM_BACKUP_MODEL}
+    temperature: 0.1
+    max_tokens: 3000
+    timeout: 45
+    supports_json: true
+
+routing:
+  market_summary: fast
+  market_analysis: fast
+  strategy_analysis: reasoning
+  decision: reasoning
+  anomaly_analysis: reasoning
+  risk_explanation: fast
+
+fallback:
+  enabled: true
+  model: backup
+  max_attempts: 2
+  on_all_models_failed: HOLD
+
+limits:
+  max_calls_per_cycle: 8
+  max_concurrent_requests: 3
+  # 复杂度达到该阈值时,market_analysis 从 fast 升级到 reasoning
+  complexity_threshold: 3
+
+# 全部模型不可用时的统一安全动作。本系统不允许把该值改成 BUY/SELL。
+safety:
+  on_all_models_failed: HOLD

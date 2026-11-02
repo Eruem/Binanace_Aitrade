@@ -1,0 +1,36 @@
+# 应用级配置。安全关键开关(TRADING_MODE 等)以环境变量为准,这里只是默认值。
+app:
+  name: ai-crypto-trading-agent
+  env: ${APP_ENV:-development}
+  log_level: ${LOG_LEVEL:-INFO}
+  # 数据与审计文件根目录(相对项目根)
+  data_dir: var
+
+# 交易模式:第一阶段仅允许 paper / testnet。live 在本版本被硬性禁止。
+trading:
+  mode: ${TRADING_MODE:-paper}
+  enable_live_trading: ${ENABLE_LIVE_TRADING:-false}
+  enable_binance_testnet: ${ENABLE_BINANCE_TESTNET:-false}
+
+paths:
+  config_dir: config
+  usage_log: var/usage/usage.jsonl
+  audit_log: var/audit/audit.jsonl
+
+# 数据库(阶段 7,可选):为空 = 不启用,仅本地 JSONL 审计。
+# 生产示例:postgresql+psycopg://user:pass@host:5432/crypto_agent
+# 口令只经环境变量 DATABASE_URL 提供,不写入本文件、不进日志。
+database:
+  url: ${DATABASE_URL:-}
+
+# Telegram 通知(阶段 7,可选):仅发送通知,绝不执行聊天指令。
+# 两者同时设置才启用;Token 只经环境变量提供。
+telegram:
+  bot_token: ${TELEGRAM_BOT_TOKEN:-}
+  chat_id: ${TELEGRAM_CHAT_ID:-}
+
+# 交易所流量代理(阶段 8,可选):为空 = 直连。
+# CCXT 默认不读系统/环境代理(trust_env=False),被墙网络需显式配置;
+# 例:http://127.0.0.1:10808 或 http://user:pass@host:port(凭据只经环境变量)。
+proxy:
+  url: ${EXCHANGE_PROXY_URL:-}
